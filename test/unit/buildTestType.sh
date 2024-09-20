@@ -1,0 +1,1 @@
+gcc -Wall -Werror -Wpedantic -g -o test_type test_type.c -I./../../algo/include/ -I./../testing/include/ -I./../error/include/ -lalgo -L./../../algo/build/ -ltesting -L./../testing/build/ -lerror -L./../error/build/
