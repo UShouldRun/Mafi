@@ -43,15 +43,15 @@ bool valid_classes_in_all_classrooms(TimeTable *timetable, size_t max_classes) {
       if (!classrooms)
         return false;
 
-      for (size_t k = 0; k < timeblocks[j].len; k++) {
-        size_t len = classrooms[k].len;
+      for (size_t k = 0; k < timeblocks[j].s_classrooms; k++) {
+        size_t s_classes = classrooms[k].s_classes;
         Class *classes = classrooms[k].classes;
 
-        if (classes == NULL && len != 0)
+        if (classes == NULL && s_classes != 0)
           return false;
-        if (classes != NULL && len == 0)
+        if (classes != NULL && s_classes == 0)
           return false;
-        if (len > max_classes)
+        if (s_classes > max_classes)
           return false;
       }
     }
@@ -77,20 +77,20 @@ bool compare_timetable(void *stateA, void *stateB, void *context) {
     sumB += type_get_assign_from_timetable(NULL, timetableB, arr_users->users[i]);
   }
 
-  return sumA >= sumB;
+  return sumA < sumB;
 }
 
 bool less_than_max_students_per_classroom(size_t max_students_per_classroom, TimeBlock *timeblock, ID class) {
   if (!timeblock)
     return false;
 
-  size_t s_classrooms = timeblock->len;
+  size_t s_classrooms = timeblock->s_classrooms;
   ClassRoom *classrooms = timeblock->classrooms;
   if (!classrooms)
     return false;
 
   for (size_t i = 0; i < s_classrooms; i++) {
-    size_t s_classes = classrooms[i].len;
+    size_t s_classes = classrooms[i].s_classes;
     Class *classes = classrooms[i].classes;
     if (!classes)
       continue;
@@ -100,7 +100,7 @@ bool less_than_max_students_per_classroom(size_t max_students_per_classroom, Tim
         continue;
       if (!classes[j].students)
         continue;
-      if (classes[j].len_students + 1 > max_students_per_classroom)
+      if (classes[j].s_students + 1 > max_students_per_classroom)
         return false;
     }
   }
@@ -116,17 +116,17 @@ bool less_than_max_teachers_per_classroom(size_t max_teachers_per_classroom, Tim
   if (!classrooms)
     return false;
 
-  for (size_t i = 0; i < timeblock->len; i++) {
+  for (size_t i = 0; i < timeblock->s_classrooms; i++) {
     if (!classrooms[i].classes)
       continue;
 
     Class *classes = classrooms[i].classes;
-    for (size_t j = 0; j < classrooms[i].len; j++) {
+    for (size_t j = 0; j < classrooms[i].s_classes; j++) {
       if (classes[j].id != class)
         continue;
       if (!classes[j].teachers)
         continue;
-      if (classes[j].len_teachers + 1 > max_teachers_per_classroom)
+      if (classes[j].s_teachers + 1 > max_teachers_per_classroom)
         return false;
     }
   }
@@ -149,8 +149,8 @@ bool less_than_max_same_class_per_week_per_student(size_t max_same_class_per_wee
         continue;
  
       bool in_current_block = false;
-      for (size_t k = 0; k < timeblock.len; k++) {
-        size_t s_classes = classrooms[k].len;
+      for (size_t k = 0; k < timeblock.s_classrooms; k++) {
+        size_t s_classes = classrooms[k].s_classes;
         Class *classes = classrooms[k].classes;
         if (!classes)
           continue;
@@ -159,7 +159,7 @@ bool less_than_max_same_class_per_week_per_student(size_t max_same_class_per_wee
           if (classes[l].id != class)
             continue;
 
-          size_t s_students = classes[l].len_students;
+          size_t s_students = classes[l].s_students;
           ID *students = classes[l].students;
           if (!students)
             continue;
@@ -200,14 +200,14 @@ bool less_than_max_blocks_per_day_per_student(size_t max_blocks_per_day_per_stud
       continue;
 
     bool in_current_block = false;
-    for (size_t k = 0; k < timeblock.len; k++) {
-      size_t s_classes = classrooms[k].len;
+    for (size_t k = 0; k < timeblock.s_classrooms; k++) {
+      size_t s_classes = classrooms[k].s_classes;
       Class *classes = classrooms[k].classes;
       if (!classes)
         continue;
 
       for (size_t l = 0; l < s_classes; l++) {
-        size_t s_students = classes[l].len_students;
+        size_t s_students = classes[l].s_students;
         ID *students = classes[l].students;
         if (!students)
           continue;
@@ -252,14 +252,14 @@ bool morning_and_afternoon(TimeTable *timetable, Entry *entry, ID id) {
     if (!classrooms)
       continue;
 
-    for (size_t k = 0; k < timeblock.len; k++) {
-      size_t s_classes = classrooms[k].len;
+    for (size_t k = 0; k < timeblock.s_classrooms; k++) {
+      size_t s_classes = classrooms[k].s_classes;
       Class *classes = classrooms[k].classes;
       if (!classes)
         continue;
 
       for (size_t l = 0; l < s_classes; l++) {
-        size_t s_students = classes[l].len_students;
+        size_t s_students = classes[l].s_students;
         ID *students = classes[l].students;
         if (!students)
           continue;
@@ -278,20 +278,20 @@ bool already_in_class(TimeBlock *timeblock, ID id) {
   if (!timeblock)
     return true;
 
-  size_t s_classrooms = timeblock->len;
+  size_t s_classrooms = timeblock->s_classrooms;
   ClassRoom *classrooms = timeblock->classrooms;
   if (!classrooms)
     return true;
 
   for (size_t k = 0; k < s_classrooms; k++) {
-    size_t s_classes = classrooms[k].len;
+    size_t s_classes = classrooms[k].s_classes;
     Class *classes = classrooms[k].classes;
     if (!classes)
       continue;
 
     for (size_t l = 0; l < s_classes; l++) {
-      size_t s_students = classes[l].len_students,
-             s_teachers = classes[l].len_teachers;
+      size_t s_students = classes[l].s_students,
+             s_teachers = classes[l].s_teachers;
       ID *students = classes[l].students,
          *teachers = classes[l].teachers;
 
@@ -347,7 +347,7 @@ size_t get_classrooms(ID **available_classrooms, TimeTable *timetable, Entry *bl
     return 0;
   }
   
-  const size_t s_classrooms = timetable->entries[block->i][block->j].len;
+  const size_t s_classrooms = timetable->entries[block->i][block->j].s_classrooms;
   ClassRoom *classrooms = timetable->entries[block->i][block->j].classrooms;
   if (!classrooms) {
     *available_classrooms = NULL;
@@ -366,7 +366,7 @@ size_t get_classrooms(ID **available_classrooms, TimeTable *timetable, Entry *bl
     if (type_get_classroom_current_capacity(&classrooms[i]) > max_size)
       continue;
 
-    const size_t s_classes = classrooms[i].len;
+    const size_t s_classes = classrooms[i].s_classes;
     Class *classes = classrooms[i].classes;
     if (!classes)
       continue;

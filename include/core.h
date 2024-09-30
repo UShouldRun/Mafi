@@ -18,7 +18,7 @@ void read(
 void store(Logger *logger, Report *report, char *write_file_name, TimeTable **timetables, size_t s_timetables);
 
 void mafi(
-  Logger *logger, Report *report,
+  Logger *logger, Report *report, double acceptance_rate,
   User ***users, TimeTable ***possible_timetables,
   size_t *s_users, size_t *s_possible_timetables,
   size_t depth, TimeTable *root_state, Rules *rules

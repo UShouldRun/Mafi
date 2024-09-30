@@ -47,7 +47,7 @@ void read(
   }
 
   size_t n = 0, m = 0;
-  if (fscanf(read_file, "%zu %zu\n\n", &m, &n) == EOF)
+  if (fscanf(read_file, "%zu %zu\n", &m, &n) == EOF)
     invalid_format(read_file_name);
 
   if (fscanf(read_file, "%zu\n", s_classrooms) == EOF)
@@ -70,14 +70,14 @@ void read(
     for (size_t j = 0; j < m; j++) {
       entries[i][j].entry.i = i;
       entries[i][j].entry.j = j;
-      entries[i][j].len = *s_classrooms;
+      entries[i][j].s_classrooms = *s_classrooms;
 
       entries[i][j].classrooms = (ClassRoom *)malloc((*s_classrooms) * sizeof(ClassRoom));
       raise_exception(entries[i][j].classrooms == NULL, fatal, mem_error);
 
       for (size_t k = 0; k < *s_classrooms; k++) {
         entries[i][j].classrooms[k].id = (*classrooms)[k];
-        entries[i][j].classrooms[k].len = 0;
+        entries[i][j].classrooms[k].s_classes = 0;
         entries[i][j].classrooms[k].classes = NULL;
       }
     }
@@ -114,21 +114,21 @@ void read(
 
       TimeBlock timeblock = (*root_state)->entries[entry.i][entry.j];
       ClassRoom *tb_classrooms = timeblock.classrooms;
-      for (size_t k = 0; k < timeblock.len; k++) {
+      for (size_t k = 0; k < timeblock.s_classrooms ; k++) {
         if (tb_classrooms[k].id != classroom)
           continue;
 
-        size_t len = tb_classrooms[k].len;
-        Class *tb_classes = (Class *)realloc(tb_classrooms[k].classes, (len + 1) * sizeof(Class));
+        size_t s_classes = tb_classrooms[k].s_classes;
+        Class *tb_classes = (Class *)realloc(tb_classrooms[k].classes, (s_classes + 1) * sizeof(Class));
         raise_exception(tb_classes == NULL, fatal, mem_error);
 
-        tb_classes[len].id = class_i;
-        tb_classes[len].len_students = 0;
-        tb_classes[len].len_teachers = 0;
-        tb_classes[len].students = NULL;
-        tb_classes[len].teachers = NULL;
+        tb_classes[s_classes].id = class_i;
+        tb_classes[s_classes].s_students = 0;
+        tb_classes[s_classes].s_teachers = 0;
+        tb_classes[s_classes].students = NULL;
+        tb_classes[s_classes].teachers = NULL;
 
-        tb_classrooms[k].len++;
+        tb_classrooms[k].s_classes++;
         tb_classrooms[k].classes = tb_classes;
       }
     }
@@ -182,17 +182,8 @@ void read(
       current_avail[i].j = entry2;
     }
 
-    User *user = (User *)malloc(sizeof(User));
+    User *user = type_create_user(user_type, current_id, user_classes, current_avail, s_current_classes, s_current_avail);
     raise_exception(user == NULL, fatal, mem_error)
-
-    user->type = user_type == student_type ? student_type : teacher_type;
-    type_set_id(user, current_id);
-    type_set_len_classes(user, s_current_classes);
-    type_set_classes(user, user_classes);
-    type_set_len_avail(user, s_current_avail);
-    type_set_avail(user, current_avail);
-    type_set_len_assign(user, 0);
-    type_set_assign(user, NULL);
 
     (*users)[i] = user;
   }
@@ -227,21 +218,19 @@ void store(Logger *logger, Report *report, char *write_file_name, TimeTable **ti
       raise_ptr_exception(timetable->entries[i] == NULL);
 
       for (size_t j = 0; j < timetable->m; j++) {
-        fprintf(write_file, "\t%zu %zu %zu\n", i, j, timetable->entries[i][j].len);
+        fprintf(write_file, "\t%zu %zu %zu\n", i, j, timetable->entries[i][j].s_classrooms);
 
         ClassRoom *classrooms = timetable->entries[i][j].classrooms;
         raise_ptr_exception(classrooms == NULL);
 
-        for (size_t k = 0; k < timetable->entries[i][j].len; k++) {
-          fprintf(write_file, "\t\t%u %zu\n", classrooms[k].id, classrooms[k].len);
+        for (size_t k = 0; k < timetable->entries[i][j].s_classrooms; k++) {
+          fprintf(write_file, "\t\t%u %zu\n", classrooms[k].id, classrooms[k].s_classes);
 
           Class *classes = classrooms[k].classes;
-          raise_exception(classes == NULL, warning, null_pointer);
+          for (size_t l = 0; l < classrooms[k].s_classes; l++) {
+            fprintf(write_file, "\t\t\t%u %zu %zu\n", classes[l].id, classes[l].s_students, classes[l].s_teachers);
 
-          for (size_t l = 0; l < classrooms[k].len; l++) {
-            fprintf(write_file, "\t\t\t%u %zu %zu\n", classes[l].id, classes[l].len_students, classes[l].len_teachers);
-
-            size_t s_students = classes[l].len_students, s_teachers = classes[l].len_teachers;
+            size_t s_students = classes[l].s_students, s_teachers = classes[l].s_teachers;
             ID *students = classes[l].students,
                *teachers = classes[l].teachers;
 
@@ -254,9 +243,14 @@ void store(Logger *logger, Report *report, char *write_file_name, TimeTable **ti
             if (teachers != NULL)
               for (size_t m = 0; m < s_teachers; m++)
                 fprintf(write_file, "\t\t\t\t%u\n", teachers[m]);
+
+            fprintf(write_file, "\n");
           }
+          fprintf(write_file, "\n");
         }
+        fprintf(write_file, "\n");
       }
+      fprintf(write_file, "\n");
     }
   }
 
@@ -266,7 +260,7 @@ _return:
 }
 
 void mafi(
-  Logger *logger, Report *report,
+  Logger *logger, Report *report, double acceptance_rate,
   User ***users, TimeTable ***possible_timetables,
   size_t *s_users, size_t *s_possible_timetables,
   size_t depth, TimeTable *root_state, Rules *rules
@@ -331,11 +325,8 @@ void mafi(
       handle_exception(exception);
     }
 
-    for (size_t i = 0; i < leaf->len_children; i++)
-      type_print_timetable(stdout, (TimeTable *)leaf->children[i]->state);
-    
     // maybe this needs a change
-    type_set_len_assign(user, type_get_len_assign(user) + 1);
+    type_set_size_assign(user, type_get_size_assign(user) + 1);
 
     logger_update_report_status(logger, report, info, "updated tree and timetables");
 
@@ -346,20 +337,44 @@ void mafi(
   *s_users = context_users.s_users;
 
   if (*possible_timetables == NULL) {
+    logger_update_report_status(logger, report, info, "No timetable solutions were found");
+
     size_t s_leaves = 0;
     Tree **leaves = tree_library_get_leaves(search_tree, &s_leaves);
 
     TimeTable **temp = (TimeTable **)malloc(s_leaves * sizeof(TimeTable *));
     raise_ptr_exception(temp == NULL);
 
+    size_t s_total_classes = 0;
+    for (size_t i = 0; i < *s_users; i++)
+      s_total_classes += type_get_is_student((*users)[i]) ? type_get_size_classes((*users)[i]) : 1;
+
+    *s_possible_timetables = 0;
     for (size_t i = 0; i < s_leaves; i++) {
-      TimeTable *copy = type_copy_timetable((TimeTable *)leaves[i]->state);
+      TimeTable *state = (TimeTable *)leaves[i]->state;
+
+      size_t s_total_assigns = 0;
+      for (size_t j = 0; j < *s_users; j++)
+        s_total_assigns += type_get_assign_from_timetable(NULL, state, (*users)[j]);
+
+      if (s_total_assigns < s_total_classes * acceptance_rate)
+        continue;
+      
+      TimeTable *copy = type_copy_timetable(state);
       raise_ptr_exception(copy == NULL);
-      temp[i] = copy;
+      temp[(*s_possible_timetables)++] = copy;
+    }
+    if (*s_possible_timetables == 0) {
+      free(temp);
+      temp = NULL;
+      raise_exception(*s_possible_timetables == 0, error, unexp_behaviour);
+    } else if (*s_possible_timetables != s_leaves) {
+      TimeTable **new_temp = (TimeTable **)realloc(temp, (*s_possible_timetables) * sizeof(TimeTable *));
+      raise_exception(new_temp == NULL, warning, null_pointer);
+      temp = new_temp;
     }
 
     *possible_timetables = temp;
-    *s_possible_timetables = s_leaves;
     free(leaves);
   }
 

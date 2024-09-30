@@ -6,12 +6,12 @@ $$
 
 \\
 
-<\text{depth}> &\to <\text{size\_t}> \\
+<\text{depth}> &\to <\text{size\_t}>\text{\textbackslash n} \\
 
 \\
 
-<\text{Rules}> &\to <\text{r1}>\,<\text{r2}>\,<\text{r3}>\,<\text{r4}>\,<\text{r5}>\,<\text{r6}> \\
-<\text{r1}> &\to <\text{max\_students\_per\_classroom}>\to <\text{size\_t}> \\
+<\text{Rules}> &\to <\text{r1}>\,<\text{r2}>\,<\text{r3}>\,<\text{r4}>\,<\text{r5}>\,<\text{r6}>\text{\textbackslash n} \\
+    <\text{r1}> &\to <\text{max\_students\_per\_classroom}>\to <\text{size\_t}> \\
 <\text{r2}> &\to <\text{max\_teachers\_per\_classroom}>\to <\text{size\_t}> \\
 <\text{r3}> &\to <\text{max\_same\_class\_per\_week\_per\_student}>\to <\text{size\_t}> \\
 <\text{r4}> &\to <\text{max\_classes\_per\_classroom}>\to <\text{size\_t}> \\

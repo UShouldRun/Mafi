@@ -1,8 +1,21 @@
 # Mafi
 
+## Table of Contents
+1. [Description](#description)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+4. [Basic Commands](#basic-commands)
+5. [Documentation](#documentation)
+6. [Libraries](#libraries)
+7. [Contributions](#contributions)
+8. [Author](#author)
+9. [License](#license)
+
+---
+
 ## Description
 
-Mafi is an algorithm designed to create timetables for teachers and students. It reads files in a specific grammar (currently `mr`) to construct data structures for user data and employs an A* approach to generate optimal timetables and then writes the output data to an output file (grammar `mw`). Future enhancements may include supporting additional file formats like JSON and implementing alternative optimization techniques.
+**Mafi** is an algorithm designed to create timetables for teachers and students. It reads files in a specific grammar (currently `mr`) to construct data structures for user data and employs an A* approach to generate optimal timetables and then writes the output data to an output file (grammar `mw`). Future enhancements may include supporting additional file formats like JSON and implementing alternative optimization techniques.
 
 ## Requirements
 
@@ -26,7 +39,7 @@ Mafi is an algorithm designed to create timetables for teachers and students. It
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/UShouldRun/mafi.git
+   git clone https://github.com/UShouldRun/Mafi.git
    cd mafi
    ```
 
@@ -40,6 +53,7 @@ Mafi is an algorithm designed to create timetables for teachers and students. It
    make build
    ```
    These commands will compile both the `mafi` and `display` binaries and place them in the `build/` directory.
+   You can also add a `DEBUG=-g` flag for debugging purposes.
 
 3. **Install the Binaries**:
    To install the binaries into the default directory (./bin), use:
@@ -64,54 +78,62 @@ Mafi is an algorithm designed to create timetables for teachers and students. It
    make clean
    ```
 
-## Usage
+## Basic Commands
 
 ### Mafi
 
 After installation, you can run Mafi using:
 
 ```bash
-mafi input_file.mr
+mafi <acceptance_rate: ]0,1[> <input_file>.mr <output_file>.mw <log_file>.log
 ```
 
-Replace `input_file.mr` with your input file in the `.mr` format.
+Replace `input_file.mr` with your input file (`.mr` format), `output_file.mw` (`.mw` format), where you'd like the output file to be written to, and the acceptance rate as the region of almost exact solutions for the program to find. If desired, you can add the path to a file where the program logs will be written to. If nothing is added it will directly print them to the `stdout`.
+
+An example usage of this command would be:
+
+```bash
+mafi 0.90 path/to/myfile.mr path/to/myfile.mw path/to/myfile.log
+```
 
 ### Display
 
 The `display` tool can be used to visualize `.mw` files:
 
 ```bash
-display file_to_display.mw
+display <file_to_display>.mw
 ```
 
 Replace `file_to_display` with the file you want to visualize.
 
-## Development
+An example usage of this command would be:
 
-The project uses the following compiler flags:
-- `-Wall`: Enable all warnings
-- `-Werror`: Treat warnings as errors
-- `-Wpedantic`: Issue warnings for strict ISO C and ISO C++ compliance
+```bash
+display path/to/myfile.mw 
+```
 
-Include directories:
-- `./algo/include`
-- `./libs/logger/include`
-- `./libs/tree/include`
-- `./include`
-
-Libraries:
-- `algo`
-- `logger`
-- `tree`
-
-To modify or extend the project, ensure you adhere to these compilation settings and link against the required libraries.
+To see more about display commands checkout its documentation on the docs directory. To leave display type `:q`. :)
 
 ## Documentation
 
 - Detailed instructions for executing the Mafi program are available in the `docs` directory.
 - Documentation for the `display` CLI app, which assists file visualization, are also included in the `docs` directory.
 
-## Contributing
+## Libraries
+
+Libraries:
+- `algo`
+- `logger`
+- `tree`
+- `hashmap`
+- `error`
+
+To modify or extend the project, ensure you adhere to these compilation settings and link against the required libraries.
+All libraries are made by the author of the project and under the same license as the entire project is.
+
+To see further into the project's compilation process, you can checkout the project's `makefile`.
+
+## Contributions
 
 Mafi is an open-source project.
 Submit pull requests or report issues, but ensure all changes are well-documented and tested.

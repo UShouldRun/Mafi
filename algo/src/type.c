@@ -7,8 +7,8 @@ Class *type_create_class(ID id, ID *students, ID *teachers, size_t s_students, s
   class->id = id;
   class->students = students;
   class->teachers = teachers;
-  class->len_students = s_students;
-  class->len_teachers = s_teachers;
+  class->s_students = s_students;
+  class->s_teachers = s_teachers;
   return class;
 }
 
@@ -18,7 +18,7 @@ ClassRoom *type_create_classroom(ID id, Class *classes, size_t s_classes) {
     return NULL;
   classroom->id = id;
   classroom->classes = classes;
-  classroom->len = s_classes;
+  classroom->s_classes = s_classes;
   return classroom;
 }
 
@@ -33,7 +33,7 @@ TimeBlock *type_create_timeblock(Entry *entry, ClassRoom *classrooms, size_t s_c
     timeblock->entry.j = 0;
   }
   timeblock->classrooms = classrooms;
-  timeblock->len = s_classrooms;
+  timeblock->s_classrooms = s_classrooms;
   return timeblock;
 }
 
@@ -47,39 +47,33 @@ TimeTable *type_create_timetable(TimeBlock **entries, size_t n, size_t m) {
   return timetable;
 }
 
-Student *type_create_student(ID id, ID *classes, Entry *avail, Assignment *assign, size_t s_classes, size_t s_avail, size_t s_assign) {
+Student *type_create_student(ID id, ID *classes, Entry *avail, size_t s_classes, size_t s_avail) {
   Student *student = (Student *)malloc(sizeof(Student));
   if (!student)
     return NULL;
   student->id = id;
   student->classes = classes;
   student->avail = avail;
-  student->assign = assign;
-  student->len_classes = s_classes;
-  student->len_avail = s_avail;
-  student->len_assign = s_assign;
+  student->s_classes = s_classes;
+  student->s_avail = s_avail;
+  student->s_assign = 0;
   return student;
 }
 
-Teacher *type_create_teacher(ID id, ID *classes, Entry *avail, Assignment *assign, size_t s_classes, size_t s_avail, size_t s_assign) {
+Teacher *type_create_teacher(ID id, ID *classes, Entry *avail, size_t s_classes, size_t s_avail) {
   Teacher *teacher = (Teacher *)malloc(sizeof(Teacher));
   if (!teacher)
     return NULL;
   teacher->id = id;
   teacher->classes = classes;
   teacher->avail = avail;
-  teacher->assign = assign;
-  teacher->len_classes = s_classes;
-  teacher->len_avail = s_avail;
-  teacher->len_assign = s_assign;
+  teacher->s_classes = s_classes;
+  teacher->s_avail = s_avail;
+  teacher->s_assign = 0;
   return teacher;
 }
 
-User *type_create_user(
-  UserType type,
-  ID id, ID *classes, Entry *avail, Assignment *assign,
-  size_t s_classes, size_t s_avail, size_t s_assign
-) {
+User *type_create_user(UserType type, ID id, ID *classes, Entry *avail, size_t s_classes, size_t s_avail) {
   Student *student;
   Teacher *teacher;
 
@@ -90,7 +84,7 @@ User *type_create_user(
 
   switch (type) {
     case student_type:
-      student = type_create_student(id, classes, avail, assign, s_classes, s_avail, s_assign);
+      student = type_create_student(id, classes, avail, s_classes, s_avail);
       if (student == NULL)
         return NULL;
       user->select.student = *student;
@@ -98,7 +92,7 @@ User *type_create_user(
       break;
 
     case teacher_type:
-      teacher = type_create_teacher(id, classes, avail, assign, s_classes, s_avail, s_assign);
+      teacher = type_create_teacher(id, classes, avail, s_classes, s_avail);
       if (teacher == NULL)
         return NULL;
       user->select.teacher = *teacher;
@@ -116,7 +110,7 @@ ID *type_copy_user_ids(ID *users, size_t s_users) {
   if (!users)
     return NULL;
 
-  ID *copy = (ID *)malloc(s_users*sizeof(ID));
+  ID *copy = (ID *)malloc(s_users * sizeof(ID));
   if (!copy)
     return NULL;
 
@@ -130,17 +124,17 @@ Class *type_copy_classes(Class *classes, size_t s_classes) {
   if (!classes)
     return NULL;
 
-  Class *copy = (Class *)malloc(s_classes*sizeof(Class));
+  Class *copy = (Class *)malloc(s_classes * sizeof(Class));
   if (!copy)
     return NULL;
 
   for (size_t i = 0; i < s_classes; i++) {
     copy[i].id = classes[i].id;
-    copy[i].len_students = classes[i].len_students;
-    copy[i].len_teachers = classes[i].len_teachers;
+    copy[i].s_students = classes[i].s_students;
+    copy[i].s_teachers = classes[i].s_teachers;
 
-    copy[i].students = type_copy_user_ids(classes[i].students, classes[i].len_students);
-    copy[i].teachers = type_copy_user_ids(classes[i].teachers, classes[i].len_teachers);
+    copy[i].students = type_copy_user_ids(classes[i].students, classes[i].s_students);
+    copy[i].teachers = type_copy_user_ids(classes[i].teachers, classes[i].s_teachers);
   }
 
   return copy;
@@ -150,14 +144,14 @@ ClassRoom *type_copy_classrooms(ClassRoom *classrooms, size_t s_classrooms) {
   if (!classrooms)
     return NULL;
 
-  ClassRoom *copy = (ClassRoom *)malloc(s_classrooms*sizeof(ClassRoom));
+  ClassRoom *copy = (ClassRoom *)malloc(s_classrooms * sizeof(ClassRoom));
   if (!copy)
     return NULL;
 
   for (size_t i = 0; i < s_classrooms; i++) {
     copy[i].id = classrooms[i].id;
-    copy[i].len = classrooms[i].len;
-    copy[i].classes = type_copy_classes(classrooms[i].classes, classrooms[i].len);
+    copy[i].s_classes = classrooms[i].s_classes;
+    copy[i].classes = type_copy_classes(classrooms[i].classes, classrooms[i].s_classes);
   }
 
   return copy;
@@ -167,15 +161,15 @@ TimeBlock *type_copy_timeblocks(TimeBlock *timeblocks, size_t s_timeblocks) {
   if (!timeblocks)
     return NULL;
 
-  TimeBlock *copy = (TimeBlock *)malloc(s_timeblocks*sizeof(TimeBlock));
+  TimeBlock *copy = (TimeBlock *)malloc(s_timeblocks * sizeof(TimeBlock));
   if (!copy)
     return NULL;
 
   for (size_t i = 0; i < s_timeblocks; i++) {
     copy[i].entry.i = timeblocks[i].entry.i;
     copy[i].entry.j = timeblocks[i].entry.j;
-    copy[i].len = timeblocks[i].len;
-    copy[i].classrooms = type_copy_classrooms(timeblocks[i].classrooms, timeblocks[i].len);
+    copy[i].s_classrooms = timeblocks[i].s_classrooms;
+    copy[i].classrooms = type_copy_classrooms(timeblocks[i].classrooms, timeblocks[i].s_classrooms);
   }
 
   return copy;
@@ -192,7 +186,7 @@ TimeTable *type_copy_timetable(TimeTable *timetable) {
   copy->n = timetable->n;
   copy->m = timetable->m;
 
-  copy->entries = (TimeBlock **)malloc(copy->n*sizeof(TimeBlock *));
+  copy->entries = (TimeBlock **)malloc(copy->n * sizeof(TimeBlock *));
   if (!copy->entries) {
     free(copy);
     return NULL;
@@ -216,16 +210,16 @@ bool type_get_is_student(User *user) {
   return user->type == student_type;
 }
 
-size_t type_get_len_classes(User *user) {
-  return user ? (user->type ? user->select.student.len_classes : user->select.teacher.len_classes) : 0;
+size_t type_get_size_classes(User *user) {
+  return user ? (user->type ? user->select.student.s_classes : user->select.teacher.s_classes) : 0;
 }
 
-size_t type_get_len_avail(User *user) {
-  return user ? (user->type ? user->select.student.len_avail : user->select.teacher.len_avail) : 0;
+size_t type_get_size_avail(User *user) {
+  return user ? (user->type ? user->select.student.s_avail : user->select.teacher.s_avail) : 0;
 }
 
-size_t type_get_len_assign(User *user) {
-  return user ? (user->type ? user->select.student.len_assign : user->select.teacher.len_assign) : 0;
+size_t type_get_size_assign(User *user) {
+  return user ? (user->type ? user->select.student.s_assign : user->select.teacher.s_assign) : 0;
 }
 
 size_t type_get_classroom_current_capacity(ClassRoom *classroom) {
@@ -233,10 +227,10 @@ size_t type_get_classroom_current_capacity(ClassRoom *classroom) {
     return 0;
 
   size_t classroom_capacity = 0;
-  for (size_t i = 0; i < classroom->len; i++) {
+  for (size_t i = 0; i < classroom->s_classes; i++) {
     if (!classroom->classes[i].students)
       continue;
-    classroom_capacity += classroom->classes[i].len_students;
+    classroom_capacity += classroom->classes[i].s_students;
   }
 
   return classroom_capacity;
@@ -254,10 +248,6 @@ Entry *type_get_avail(User *user) {
   return user ? (user->type ? user->select.student.avail : user->select.teacher.avail) : NULL;
 }
 
-Assignment *type_get_assign(User *user) {
-  return user ? (user->type ? user->select.student.assign : user->select.teacher.assign) : NULL;
-}
-
 size_t type_get_assign_from_timetable(Assignment **assign, TimeTable *timetable, User *user) {
   if (!timetable)
     return 0;
@@ -269,59 +259,74 @@ size_t type_get_assign_from_timetable(Assignment **assign, TimeTable *timetable,
   size_t size = 0;
   for (size_t i = 0; i < timetable->n; i++) {
     if (!timetable->entries[i])
-      return 0;
+      continue;
 
     for (size_t j = 0; j < timetable->m; j++) {
-      if (!timetable->entries[i][j].classrooms)
-        return 0;
+      size_t s_classrooms = timetable->entries[i][j].s_classrooms;
+      ClassRoom *classrooms = timetable->entries[i][j].classrooms;
+      if (!classrooms)
+        continue;
 
-      for (size_t k = 0; k < timetable->entries[i][j].len; k++) {
-        if (!timetable->entries[i][j].classrooms[k].classes)
-          return 0;
+      for (size_t k = 0; k < s_classrooms; k++) {
+        size_t s_classes = classrooms[k].s_classes;
+        Class *classes = classrooms[k].classes;
+        if (!classes)
+          continue;
         
-        for (size_t l = 0; l < timetable->entries[i][j].classrooms[k].len; l++) {
-          if (!timetable->entries[i][j].classrooms[k].classes[l].students)
-            return 0;
-          if (!timetable->entries[i][j].classrooms[k].classes[l].teachers)
-            return 0;
-          
+        for (size_t l = 0; l < s_classes; l++) {
           switch (user->type) {
-            case student_type:
-              for (size_t m = 0; m < timetable->entries[i][j].classrooms[k].classes[l].len_students; m++) {
-                if (timetable->entries[i][j].classrooms[k].classes[l].students[m] == type_get_id(user)) {
+            case student_type: {
+              if (!classes[l].students)
+                continue;
+
+              for (size_t m = 0; m < classes[l].s_students; m++) {
+                if (classes[l].students[m] == type_get_id(user)) {
                   size++;
-                  if (assign) {
-                    Assignment *temp = (Assignment *)realloc(*assign, size*sizeof(Assignment));
-                    if (!temp)
-                      return 0;
-                    *assign = temp;
-                    (*assign)[size-1].block.i = i;
-                    (*assign)[size-1].block.j = j;
-                    (*assign)[size-1].classroom = timetable->entries[i][j].classrooms[k].id;
-                    (*assign)[size-1].class = timetable->entries[i][j].classrooms[k].classes[l].id;
-                  }
+
+                  if (!assign)
+                    continue;
+
+                  Assignment *temp = (Assignment *)realloc(*assign, size * sizeof(Assignment));
+                  if (!temp)
+                    return 0;
+
+                  *assign = temp;
+                  (*assign)[size-1].block.i = i;
+                  (*assign)[size-1].block.j = j;
+                  (*assign)[size-1].classroom = classrooms[k].id;
+                  (*assign)[size-1].class = classes[l].id;
                 }
               }
-              break;
 
-            case teacher_type:
-              for (size_t m = 0; m < timetable->entries[i][j].classrooms[k].classes[l].len_teachers; m++) {
-                if (timetable->entries[i][j].classrooms[k].classes[l].teachers[m] == type_get_id(user)) {
+              break;
+            }
+              
+            case teacher_type: {
+              if (!classes[l].teachers)
+                continue;
+
+              for (size_t m = 0; m < classes[l].s_teachers; m++) {
+                if (classes[l].teachers[m] == type_get_id(user)) {
                   size++;
-                  if (assign) {
-                    Assignment *temp = (Assignment *)realloc(*assign, size*sizeof(Assignment));
-                    if (!temp)
-                      return 0;
-                    *assign = temp;
-                    (*assign)[size-1].block.i = i;
-                    (*assign)[size-1].block.j = j;
-                    (*assign)[size-1].classroom = timetable->entries[i][j].classrooms[k].id;
-                    (*assign)[size-1].class = timetable->entries[i][j].classrooms[k].classes[l].id;
-                  }
+
+                  if (!assign)
+                    continue;
+
+                  Assignment *temp = (Assignment *)realloc(*assign, size * sizeof(Assignment));
+                  if (!temp)
+                    return 0;
+
+                  *assign = temp;
+                  (*assign)[size-1].block.i = i;
+                  (*assign)[size-1].block.j = j;
+                  (*assign)[size-1].classroom = classrooms[k].id;
+                  (*assign)[size-1].class = classes[l].id;
                 }
               }
-              break;
 
+              break;
+            }
+              
             default:
               break;
           }
@@ -350,16 +355,16 @@ size_t type_get_assign_from_timetable_with_id(Assignment **assign, TimeTable *ti
         continue;
 
       bool checked_user = false;
-      for (size_t k = 0; k < timetable->entries[i][j].len; k++) {
+      for (size_t k = 0; k < timetable->entries[i][j].s_classrooms; k++) {
         ClassRoom classroom = timetable->entries[i][j].classrooms[k];
 
         if (!classroom.classes)
           continue;
 
-        for (size_t l = 0; l < classroom.len; l++) {
+        for (size_t l = 0; l < classroom.s_classes; l++) {
           Class class = classroom.classes[l]; 
           if (class.students) {
-            for (size_t m = 0; m < class.len_students; m++)
+            for (size_t m = 0; m < class.s_students; m++)
               if (class.students[m] == user) {
                 Assignment *temp = (Assignment *)realloc(schedule, (s_schedule + 1) * sizeof(Assignment));
                 if (!temp)
@@ -373,7 +378,7 @@ size_t type_get_assign_from_timetable_with_id(Assignment **assign, TimeTable *ti
               }
           }
           if (class.teachers) {
-            for (size_t m = 0; m < class.len_teachers; m++)
+            for (size_t m = 0; m < class.s_teachers; m++)
               if (class.teachers[m] == user) {
                 Assignment *temp = (Assignment *)realloc(schedule, (s_schedule + 1) * sizeof(Assignment));
                 if (!temp)
@@ -400,42 +405,42 @@ size_t type_get_assign_from_timetable_with_id(Assignment **assign, TimeTable *ti
   return s_schedule;
 }
 
-void type_set_len_classes(User *user, size_t len) {
+void type_set_size_classes(User *user, size_t s_classes) {
   if (!user) return;
   switch (user->type) {
     case student_type:
-      user->select.student.len_classes = len;
+      user->select.student.s_classes = s_classes;
       return;
     case teacher_type:
-      user->select.teacher.len_classes = len;
+      user->select.teacher.s_classes = s_classes;
       return;
     default:
       return;
   }
 }
 
-void type_set_len_avail(User *user, size_t len) {
+void type_set_size_avail(User *user, size_t s_avail) {
   if (!user) return;
   switch (user->type) {
     case student_type:
-      user->select.student.len_avail = len;
+      user->select.student.s_avail = s_avail;
       return;
     case teacher_type:
-      user->select.teacher.len_avail = len;
+      user->select.teacher.s_avail = s_avail;
       return;
     default:
       return;
   }
 }
 
-void type_set_len_assign(User *user, size_t len) {
+void type_set_size_assign(User *user, size_t s_assign) {
   if (!user) return;
   switch (user->type) {
     case student_type:
-      user->select.student.len_assign = len;
+      user->select.student.s_assign = s_assign;
       return;
     case teacher_type:
-      user->select.teacher.len_assign = len;
+      user->select.teacher.s_assign = s_assign;
       return;
     default:
       return;
@@ -484,27 +489,13 @@ void type_set_avail(User *user, Entry *avail) {
   }
 }
 
-void type_set_assign(User *user, Assignment *assign) {
-  if (!user) return;
-  switch (user->type) {
-    case student_type:
-      user->select.student.assign = assign;
-      return;
-    case teacher_type:
-      user->select.teacher.assign = assign;
-      return;
-    default:
-      return;
-  }
-}
-
-void type_delete_class(Class **class, size_t len) {
+void type_delete_class(Class **class, size_t s_classes) {
   if (!class)
     return;
   if (!*class)
     return;
 
-  for (size_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < s_classes; i++) {
     if ((*class)[i].students)
       free((*class)[i].students);
     if ((*class)[i].teachers)
@@ -515,27 +506,27 @@ void type_delete_class(Class **class, size_t len) {
   *class = NULL;
 }
 
-void type_delete_classroom(ClassRoom **classroom, size_t len) {
+void type_delete_classroom(ClassRoom **classroom, size_t s_classrooms) {
   if (!classroom)
     return;
   if (!*classroom)
     return;
 
-  for (size_t i = 0; i < len; i++)
-    type_delete_class(&(*classroom)[i].classes, (*classroom)[i].len);
+  for (size_t i = 0; i < s_classrooms; i++)
+    type_delete_class(&(*classroom)[i].classes, (*classroom)[i].s_classes);
   free(*classroom);
 
   *classroom = NULL;
 }
 
-void type_delete_timeblock(TimeBlock **timeblock, size_t len) {
+void type_delete_timeblock(TimeBlock **timeblock, size_t s_timeblocks) {
   if (!timeblock)
     return;
   if (!*timeblock)
     return;
 
-  for (size_t j = 0; j < len; j++)
-    type_delete_classroom(&(*timeblock)[j].classrooms, (*timeblock)[j].len);
+  for (size_t j = 0; j < s_timeblocks; j++)
+    type_delete_classroom(&(*timeblock)[j].classrooms, (*timeblock)[j].s_classrooms);
   free(*timeblock);
 
   *timeblock = NULL;
@@ -564,8 +555,6 @@ void type_delete_student(Student **student) {
     free((*student)->classes);
   if (!(*student)->avail)
     free((*student)->avail);
-  if (!(*student)->assign)
-    free((*student)->assign);
   free(*student);
   *student = NULL;
 }
@@ -579,8 +568,6 @@ void type_delete_teacher(Teacher **teacher) {
     free((*teacher)->classes);
   if (!(*teacher)->avail)
     free((*teacher)->avail);
-  if (!(*teacher)->assign)
-    free((*teacher)->assign);
   free(*teacher);
   *teacher = NULL;
 }
@@ -596,8 +583,6 @@ void type_delete_user(User **user) {
         free((*user)->select.student.classes);
       if ((*user)->select.student.avail)
         free((*user)->select.student.avail);
-      if ((*user)->select.student.assign)
-        free((*user)->select.student.assign);
       break;
     } 
     case teacher_type: {
@@ -605,8 +590,6 @@ void type_delete_user(User **user) {
         free((*user)->select.teacher.classes);
       if ((*user)->select.teacher.avail)
         free((*user)->select.teacher.avail);
-      if ((*user)->select.teacher.assign)
-        free((*user)->select.teacher.assign);
       break;
     }
     default:
@@ -634,7 +617,7 @@ void type_print_timetable(FILE *dest, TimeTable *timetable) {
       continue;
 
     for (size_t j = 0; j < timetable->m; j++) {
-      size_t s_classrooms = timeblocks[j].len;
+      size_t s_classrooms = timeblocks[j].s_classrooms;
       ClassRoom *classrooms = timeblocks[j].classrooms;
       fprintf(dest, "\t\t\033[35mj:%zu, classrooms:%p (s_classrooms:%zu)\033[0m\n", j, (void *)classrooms, s_classrooms);
       if (!classrooms)
@@ -642,7 +625,7 @@ void type_print_timetable(FILE *dest, TimeTable *timetable) {
 
       for (size_t k = 0; k < s_classrooms; k++) {
         ID classroom_id = classrooms[k].id;
-        size_t s_classes = classrooms[k].len;
+        size_t s_classes = classrooms[k].s_classes;
         Class *classes = classrooms[k].classes;
         fprintf(dest, "\t\t\t\033[36mclassroom_id:%u, classes:%p (s_classes:%zu)\033[0m\n", classroom_id, (void *)classes, s_classes);
         if (!classes)
@@ -651,8 +634,8 @@ void type_print_timetable(FILE *dest, TimeTable *timetable) {
         for (size_t l = 0; l < s_classes; l++) {
           ID class_id = classes[l].id;
 
-          size_t s_students = classes[l].len_students;
-          size_t s_teachers = classes[l].len_teachers;
+          size_t s_students = classes[l].s_students;
+          size_t s_teachers = classes[l].s_teachers;
 
           ID *students = classes[l].students,
              *teachers = classes[l].teachers;
@@ -674,4 +657,32 @@ void type_print_timetable(FILE *dest, TimeTable *timetable) {
       }
     }
   }
+}
+
+
+void type_print_user(FILE *dest, User *user) {
+  if (!dest)
+    return;
+  if (!user)
+    return;
+
+  fprintf(dest, "User {\n\tid: %u,\n", type_get_id(user));
+
+  size_t s_classes = type_get_size_classes(user);
+  ID *classes = type_get_classes(user);
+
+  fprintf(dest, "\tclasses (s_classes: %zu): {\n", s_classes);
+  for (size_t i = 0; i < s_classes; i++)
+    fprintf(dest, "\t\t%u,\n", classes[i]);
+  fprintf(dest, "\t},\n");
+
+  size_t s_avail = type_get_size_avail(user);
+  Entry *avail = type_get_avail(user);
+
+  fprintf(dest, "\tavail (s_avail: %zu): {\n", s_avail);
+  for (size_t i = 0; i < s_avail; i++)
+    fprintf(dest, "\t\t{ i: %zu, j: %zu },\n", avail[i].i, avail[i].j);
+  fprintf(dest, "\t}\n");
+
+  fprintf(dest, "}\n");
 }

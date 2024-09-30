@@ -5,9 +5,9 @@ INCLUDE_MAFI = -I./include/ -I./algo/include/ -I./libs/logger/include/ -I./libs/
 SRC_MAFI = src/main.c src/core.c src/utils.c
 LIBS_MAFI = -lalgo -L./algo/build/ -llogger -L./libs/logger/build/ -ltree -L./libs/tree/build/
 
-INCLUDE_DISPLAY = -I./display/include/ -I./algo/include/ -I./test/error/include/
+INCLUDE_DISPLAY = -I./display/include/ -I./algo/include/ -I./libs/error/include/
 SRC_DISPLAY = display/src/main.c display/src/screen.c display/src/data.c
-LIBS_DISPLAY = -lncurses -lalgo -L./algo/build/ -lerror -L./test/error/build/
+LIBS_DISPLAY = -lncurses -lalgo -L./algo/build/ -lerror -L./libs/error/build/
 
 PREFIX ?= .
 DEBUG ?=

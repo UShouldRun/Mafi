@@ -40,23 +40,23 @@ void update_progress_bar(size_t iteration, const size_t s_tests) {
     printf("\n");
 }
 
-bool in_array(uint x, uint *array, size_t len) {
+bool in_array(uint x, uint *array, size_t s_array) {
   if (!array)
     return false;
 
-  for (size_t i = 0; i < len; i++)
+  for (size_t i = 0; i < s_array; i++)
     if (array[i] == x)
       return true;
 
   return false;
 }
 
-int arrayset(uint *array, uint value, size_t len) {
+int arrayset(uint *array, uint value, size_t s_array) {
   if (!array)
     return 1;
-  if (!len)
+  if (!s_array)
     return 2;
-  for (size_t i = 0; i < len; i++)
+  for (size_t i = 0; i < s_array; i++)
     array[i] = value;
   return 0;
 }
@@ -96,8 +96,8 @@ TestStatus tt_create_class_and_delete_class() {
   check_fail(unexp_behaviour, class->id != id);
   check_fail(unexp_behaviour, class->students != students);
   check_fail(unexp_behaviour, class->teachers != teachers);
-  check_fail(unexp_behaviour, class->len_students != s_students);
-  check_fail(unexp_behaviour, class->len_teachers != s_teachers);
+  check_fail(unexp_behaviour, class->s_students != s_students);
+  check_fail(unexp_behaviour, class->s_teachers != s_teachers);
 
   type_delete_class(&class, 1);
   check_fail(unexp_behaviour, class);
@@ -229,10 +229,10 @@ TestStatus tt_copy_classes() {
     for (size_t j = 0; j < sizes_teachers[i]; j++)
       teachers[i][j] = j;
 
-    classes[i].len_students = sizes_students[i];
+    classes[i].s_students = sizes_students[i];
     classes[i].students = students[i];
 
-    classes[i].len_teachers = sizes_teachers[i];
+    classes[i].s_teachers = sizes_teachers[i];
     classes[i].teachers = teachers[i];
   }
 
@@ -242,8 +242,8 @@ TestStatus tt_copy_classes() {
   for (size_t i = 0; i < s_classes; i++) {
     check_fail(unexp_behaviour, cp[i].id != classes[i].id);
 
-    check_fail(unexp_behaviour, cp[i].len_students != classes[i].len_students);
-    check_fail(unexp_behaviour, cp[i].len_teachers != classes[i].len_teachers);
+    check_fail(unexp_behaviour, cp[i].s_students != classes[i].s_students);
+    check_fail(unexp_behaviour, cp[i].s_teachers != classes[i].s_teachers);
 
     for (size_t j = 0; j < sizes_students[i]; j++)
       check_fail(unexp_behaviour, cp[i].students[j] != classes[i].students[j]);
@@ -286,12 +286,12 @@ TestStatus tt_copy_classrooms() {
 
   for (size_t i = 0; i < s_classrooms; i++) {
     classrooms[i].id = rand() % 100;
-    classrooms[i].len = rand() % 3 + 1;
+    classrooms[i].s_classes = rand() % 3 + 1;
 
-    Class *classes = (Class *)malloc(classrooms[i].len * sizeof(Class));
+    Class *classes = (Class *)malloc(classrooms[i].s_classes * sizeof(Class));
     check_error(mem_error, !classes);
 
-    for (size_t j = 0; j < classrooms[i].len; j++) {
+    for (size_t j = 0; j < classrooms[i].s_classes; j++) {
       size_t s_students = rand() % 10 + 1,
              s_teachers = rand() % 5 + 1;
 
@@ -307,8 +307,8 @@ TestStatus tt_copy_classrooms() {
         teachers[k] = k;
 
       classes[j].id = j;
-      classes[j].len_students = s_students;
-      classes[j].len_teachers = s_teachers;
+      classes[j].s_students = s_students;
+      classes[j].s_teachers = s_teachers;
       classes[j].students = students;
       classes[j].teachers = teachers;
     }
@@ -321,17 +321,17 @@ TestStatus tt_copy_classrooms() {
 
   for (size_t i = 0; i < s_classrooms; i++) {
     check_fail(unexp_behaviour, cp[i].id != classrooms[i].id);
-    check_fail(unexp_behaviour, cp[i].len != classrooms[i].len);
+    check_fail(unexp_behaviour, cp[i].s_classes != classrooms[i].s_classes);
     check_fail(nullptr, !cp[i].classes);
 
-    for (size_t j = 0; j < classrooms[i].len; j++) {
+    for (size_t j = 0; j < classrooms[i].s_classes; j++) {
       check_fail(unexp_behaviour, cp[i].classes[j].id != classrooms[i].classes[j].id);
       check_fail(nullptr, !cp[i].classes[j].students);
       check_fail(nullptr, !cp[i].classes[j].teachers);
 
-      for (size_t k = 0; k < classrooms[i].classes[j].len_students; k++)
+      for (size_t k = 0; k < classrooms[i].classes[j].s_students; k++)
         check_fail(unexp_behaviour, cp[i].classes[j].students[k] != classrooms[i].classes[j].students[k]);
-      for (size_t k = 0; k < classrooms[i].classes[j].len_teachers; k++)
+      for (size_t k = 0; k < classrooms[i].classes[j].s_teachers; k++)
         check_fail(unexp_behaviour, cp[i].classes[j].teachers[k] != classrooms[i].classes[j].teachers[k]);
     }
   }
@@ -339,7 +339,7 @@ TestStatus tt_copy_classrooms() {
 _return:
   if (cp) {
     for (size_t i = 0; i < s_classrooms; i++) {
-      for (size_t j = 0; j < cp[i].len; j++) {
+      for (size_t j = 0; j < cp[i].s_classes; j++) {
         free(cp[i].classes[j].students);
         free(cp[i].classes[j].teachers);
       }
@@ -349,7 +349,7 @@ _return:
   }
   if (classrooms) {
     for (size_t i = 0; i < s_classrooms; i++) {
-      for (size_t j = 0; j < classrooms[i].len; j++) {
+      for (size_t j = 0; j < classrooms[i].s_classes; j++) {
         free(classrooms[i].classes[j].students);
         free(classrooms[i].classes[j].teachers);
       }
@@ -372,30 +372,30 @@ TestStatus tt_copy_timeblocks() {
     timeblocks[i].entry.i = i;
     timeblocks[i].entry.j = j;
 
-    timeblocks[i].len = rand() % 5 + 1;
-    ClassRoom *classrooms = (ClassRoom *)malloc(timeblocks[i].len * sizeof(ClassRoom));
+    timeblocks[i].s_classrooms = rand() % 5 + 1;
+    ClassRoom *classrooms = (ClassRoom *)malloc(timeblocks[i].s_classrooms * sizeof(ClassRoom));
     check_error(mem_error, !classrooms);
 
-    for (size_t j = 0; j < timeblocks[i].len; j++) {
+    for (size_t j = 0; j < timeblocks[i].s_classrooms ; j++) {
       classrooms[j].id = j;
-      classrooms[j].len = rand() % 5 + 1;
+      classrooms[j].s_classes = rand() % 5 + 1;
 
-      Class *classes = (Class *)malloc(classrooms[j].len * sizeof(Class));
+      Class *classes = (Class *)malloc(classrooms[j].s_classes * sizeof(Class));
       check_error(mem_error, !classes);
-      for (size_t k = 0; k < classrooms[j].len; k++) {
+      for (size_t k = 0; k < classrooms[j].s_classes ; k++) {
         classes[k].id = k;
-        classes[k].len_students = rand() % 6 + 5;
-        classes[k].len_teachers = rand() % 3 + 1;
+        classes[k].s_students = rand() % 6 + 5;
+        classes[k].s_teachers = rand() % 3 + 1;
 
-        ID *students = (ID *)malloc(classes[k].len_students * sizeof(ID));
+        ID *students = (ID *)malloc(classes[k].s_students * sizeof(ID));
         check_error(mem_error, !students);
 
-        ID *teachers = (ID *)malloc(classes[k].len_teachers * sizeof(ID));
+        ID *teachers = (ID *)malloc(classes[k].s_teachers * sizeof(ID));
         check_error(mem_error, !teachers);
 
-        for (size_t l = 0; l < classes[k].len_students; l++)
+        for (size_t l = 0; l < classes[k].s_students; l++)
           students[l] = l;
-        for (size_t l = 0; l < classes[k].len_teachers; l++)
+        for (size_t l = 0; l < classes[k].s_teachers; l++)
           teachers[l] = l;
 
         classes[k].students = students;
@@ -413,31 +413,31 @@ TestStatus tt_copy_timeblocks() {
 
   for (size_t i = 0; i < s_timeblocks; i++) {
     check_fail(unexp_behaviour, cp[i].entry.i != timeblocks[i].entry.i || cp[i].entry.j != timeblocks[i].entry.j);
-    check_fail(unexp_behaviour, cp[i].len != timeblocks[i].len);
+    check_fail(unexp_behaviour, cp[i].s_classrooms != timeblocks[i].s_classrooms);
     check_fail(unexp_behaviour, !cp[i].classrooms);
 
-    size_t s_classrooms = timeblocks[i].len;
+    size_t s_classrooms = timeblocks[i].s_classrooms ;
     ClassRoom *t_classrooms = timeblocks[i].classrooms,
               *cp_classrooms = cp[i].classrooms;
 
     for (size_t j = 0; j < s_classrooms; j++) {
       check_fail(unexp_behaviour, cp_classrooms[j].id != t_classrooms[j].id);
-      check_fail(unexp_behaviour, cp_classrooms[j].len != t_classrooms[j].len);
+      check_fail(unexp_behaviour, cp_classrooms[j].s_classes != t_classrooms[j].s_classes);
       check_fail(nullptr, !cp_classrooms[j].classes);
 
-      size_t s_classes = t_classrooms[j].len;
+      size_t s_classes = t_classrooms[j].s_classes;
       Class *t_classes = t_classrooms[j].classes,
               *cp_classes = cp_classrooms[j].classes;
 
       for (size_t k = 0; k < s_classes; k++) {
         check_fail(unexp_behaviour, cp_classes[k].id != t_classes[k].id);
-        check_fail(unexp_behaviour, cp_classes[k].len_students != t_classes[k].len_students);
-        check_fail(unexp_behaviour, cp_classes[k].len_teachers != t_classes[k].len_teachers);
+        check_fail(unexp_behaviour, cp_classes[k].s_students != t_classes[k].s_students);
+        check_fail(unexp_behaviour, cp_classes[k].s_teachers != t_classes[k].s_teachers);
         check_fail(nullptr, !cp_classes[k].students);
         check_fail(nullptr, !cp_classes[k].teachers);
 
-        size_t s_students = cp_classes[k].len_students,
-               s_teachers = cp_classes[k].len_teachers;
+        size_t s_students = cp_classes[k].s_students,
+               s_teachers = cp_classes[k].s_teachers;
 
         ID *cp_students = cp_classes[k].students,
            *t_students = t_classes[k].students,
@@ -455,8 +455,8 @@ TestStatus tt_copy_timeblocks() {
 _return:
   if (cp) {
     for (size_t i = 0; i < s_timeblocks; i++) {
-      for (size_t j = 0; j < cp[i].len; j++) {
-        for (size_t k = 0; k < cp[i].classrooms[j].len; k++) {
+      for (size_t j = 0; j < cp[i].s_classrooms ; j++) {
+        for (size_t k = 0; k < cp[i].classrooms[j].s_classes; k++) {
           free(cp[i].classrooms[j].classes[k].students);
           free(cp[i].classrooms[j].classes[k].teachers);
         }
@@ -468,8 +468,8 @@ _return:
   }
   if (timeblocks) {
     for (size_t i = 0; i < s_timeblocks; i++) {
-      for (size_t j = 0; j < timeblocks[i].len; j++) {
-        for (size_t k = 0; k < timeblocks[i].classrooms[j].len; k++) {
+      for (size_t j = 0; j < timeblocks[i].s_classrooms ; j++) {
+        for (size_t k = 0; k < timeblocks[i].classrooms[j].s_classes; k++) {
           free(timeblocks[i].classrooms[j].classes[k].students);
           free(timeblocks[i].classrooms[j].classes[k].teachers);
         }
@@ -543,51 +543,51 @@ TestStatus tt_get_assign_from_timetable_with_id() {
       for (size_t k = 0; k < s_classrooms; k++) {
         classrooms[k].id = classrooms_id[k];
 
-        size_t len = rand() % (s_classes / 2) + 1;
-        Class *classes = (Class *)malloc(len * sizeof(Class));
+        size_t _s_classes = rand() % (s_classes / 2) + 1;
+        Class *classes = (Class *)malloc(_s_classes * sizeof(Class));
         check_error(mem_error, !classes);
 
-        for (size_t l = 0; l < len; l++) {
+        for (size_t l = 0; l < _s_classes; l++) {
           classes[l].id = classes_id[l];
 
-          size_t len_students = rand() % (s_students - 4) + 5,
-                 len_teachers = rand() % (s_teachers - 2) + 3;
+          size_t _s_students = rand() % (s_students - 4) + 5,
+                 _s_teachers = rand() % (s_teachers - 2) + 3;
 
-          ID *_students = (ID *)malloc(len_students * sizeof(ID));
+          ID *_students = (ID *)malloc(_s_students * sizeof(ID));
           check_error(mem_error, !_students);
-          check_error(unexp_behaviour, arrayset(_students, 0, len_students));
+          check_error(unexp_behaviour, arrayset(_students, 0, _s_students));
 
-          for (size_t m = 0; m < len_students; m++) {
+          for (size_t m = 0; m < _s_students; m++) {
             ID x;
             do {
               x = students[rand() % s_students];
-            } while (in_array(x, _students, len_students));
+            } while (in_array(x, _students, _s_students));
             _students[m] = x;
           }
 
-          ID *_teachers = (ID *)malloc(len_teachers * sizeof(ID));
+          ID *_teachers = (ID *)malloc(_s_teachers * sizeof(ID));
           check_error(mem_error, !_teachers);
-          check_error(unexp_behaviour, arrayset(_teachers, 0, len_teachers));
+          check_error(unexp_behaviour, arrayset(_teachers, 0, _s_teachers));
 
-          for (size_t m = 0; m < len_teachers; m++) {
+          for (size_t m = 0; m < _s_teachers; m++) {
             ID x;
             do {
               x = teachers[rand() % s_teachers];
-            } while (in_array(x, _teachers, len_teachers));
+            } while (in_array(x, _teachers, _s_teachers));
             _teachers[m] = x;
           }
 
           classes[l].students = _students;
           classes[l].teachers = _teachers;
-          classes[l].len_students = len_students;
-          classes[l].len_teachers = len_teachers;
+          classes[l].s_students = _s_students;
+          classes[l].s_teachers = _s_teachers;
         }
 
         classrooms[k].classes = classes;
-        classrooms[k].len = len;
+        classrooms[k].s_classes = _s_classes;
       }
 
-      entries[i][j].len = s_classrooms;
+      entries[i][j].s_classrooms = s_classrooms;
       entries[i][j].classrooms = classrooms;
     }
   }
@@ -609,7 +609,7 @@ TestStatus tt_get_assign_from_timetable_with_id() {
     ClassRoom classroom;
     Class class;
 
-    for (size_t j = 0; j < timeblock.len; j++)
+    for (size_t j = 0; j < timeblock.s_classrooms; j++)
       if (timeblock.classrooms[j].id == assign[i].classroom) {
         classroom = timeblock.classrooms[j];
         break;
@@ -617,7 +617,7 @@ TestStatus tt_get_assign_from_timetable_with_id() {
 
     check_error(nullptr, classroom.classes == NULL);
 
-    for (size_t j = 0; j < classroom.len; j++)
+    for (size_t j = 0; j < classroom.s_classes; j++)
       if (classroom.classes[j].id == assign[i].class) {
         class = classroom.classes[j];
         break;
@@ -627,12 +627,12 @@ TestStatus tt_get_assign_from_timetable_with_id() {
     check_error(nullptr, class.teachers == NULL);
 
     bool is_in_class = false;
-    for (size_t j = 0; j < class.len_students; j++)
+    for (size_t j = 0; j < class.s_students; j++)
       if (class.students[j] == user) {
         is_in_class++;
         break;
       }
-    for (size_t j = 0; j < class.len_teachers; j++)
+    for (size_t j = 0; j < class.s_teachers; j++)
       if (class.teachers[j] == user) {
         is_in_class++;
         break;

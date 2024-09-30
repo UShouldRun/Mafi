@@ -35,23 +35,23 @@ size_t str_len(char *str) {
   return len;
 }
 
-bool in_array(uint x, uint *array, size_t len) {
+bool in_array(uint x, uint *array, size_t s_array) {
   if (!array)
     return false;
 
-  for (size_t i = 0; i < len; i++)
+  for (size_t i = 0; i < s_array; i++)
     if (array[i] == x)
       return true;
 
   return false;
 }
 
-int arrayset(uint *array, uint value, size_t len) {
+int arrayset(uint *array, uint value, size_t s_array) {
   if (!array)
     return 1;
-  if (!len)
+  if (!s_array)
     return 2;
-  for (size_t i = 0; i < len; i++)
+  for (size_t i = 0; i < s_array; i++)
     array[i] = value;
   return 0;
 }
@@ -139,7 +139,7 @@ TestStatus test_algo_queue_and_algo_pick() {
       avail[j].j = entry_j;
     }
       
-    users[i] = type_create_user(type, id, user_classes, avail, NULL, min_classes, s_avail, 0);
+    users[i] = type_create_user(type, id, user_classes, avail, min_classes, s_avail);
     check_error(nullptr, users[i] == NULL);
   }
 
@@ -155,11 +155,11 @@ TestStatus test_algo_queue_and_algo_pick() {
     check_error(unexp_behaviour, exception->level > warning);
   }
 
-  size_t min_avail = type_get_len_avail(users[0]);
+  size_t min_avail = type_get_size_avail(users[0]);
   for (size_t i = 1; i < s_users; i++) {
-    size_t len_avail = type_get_len_avail(users[i]);
-    check_fail(unexp_behaviour, min_avail > len_avail);
-    min_avail = len_avail;
+    size_t s_avail = type_get_size_avail(users[i]);
+    check_fail(unexp_behaviour, min_avail > s_avail);
+    min_avail = s_avail;
   }
 
   User *picked_user = NULL;
@@ -204,21 +204,21 @@ TestStatus test_algo_a_star_best() {
   Tree *root = tree_library_create_root((void *)&root_state); 
   check_error(nullptr, root == NULL);
 
-  size_t len_children = rand() % 3 + 1;
-  uint *root_children_states = (uint *)malloc(len_children * sizeof(uint));
+  size_t s_children = rand() % 3 + 1;
+  uint *root_children_states = (uint *)malloc(s_children * sizeof(uint));
   check_error(mem_error, root_children_states == NULL);
-  for (size_t i = 0; i < len_children; i++) {
+  for (size_t i = 0; i < s_children; i++) {
     root_children_states[i] = i + 1;
     root = tree_library_add_child(root, (void *)&root_children_states[i]);
     check_error(nullptr, root == NULL);
   }
 
-  size_t chosen_child = rand() % len_children,
-         len_grandchildren = rand() % 3 + 1;
-  uint *root_grandchildren_states = (uint *)malloc(len_grandchildren * sizeof(uint));
+  size_t chosen_child = rand() % s_children,
+         s_grandchildren = rand() % 3 + 1;
+  uint *root_grandchildren_states = (uint *)malloc(s_grandchildren * sizeof(uint));
   check_error(mem_error, root_grandchildren_states == NULL);
-  for (size_t i = 0; i < len_grandchildren; i++) {
-    root_grandchildren_states[i] = len_children + i + 1;
+  for (size_t i = 0; i < s_grandchildren; i++) {
+    root_grandchildren_states[i] = s_children + i + 1;
     root->children[chosen_child] = tree_library_add_child(root->children[chosen_child], (void *)&root_grandchildren_states[i]);
     check_error(nullptr, root->children[chosen_child] == NULL);
   }
@@ -263,7 +263,7 @@ size_t get_classrooms(ID **available_classrooms, TimeTable *timetable, Entry *bl
   if (!valid_entry)
     return 0;
   
-  const size_t s_classrooms = timetable->entries[block->i][block->j].len;
+  const size_t s_classrooms = timetable->entries[block->i][block->j].s_classrooms;
   ClassRoom *classrooms = timetable->entries[block->i][block->j].classrooms;
   if (!classrooms)
     return 0;
@@ -280,7 +280,7 @@ size_t get_classrooms(ID **available_classrooms, TimeTable *timetable, Entry *bl
     if (type_get_classroom_current_capacity(&classrooms[i]) > max_size)
       continue;
 
-    const size_t s_classes = classrooms[i].len;
+    const size_t s_classes = classrooms[i].s_classes;
     Class *classes = classrooms[i].classes;
     if (!classes)
       continue;
@@ -329,7 +329,7 @@ TestStatus test_algo_search() {
   for (size_t i = 0; i < s_classes; i++)
     classes_id[i] = i + 1;
 
-  const size_t len_classrooms = rand() % 3 + 2;
+  const size_t s_classrooms = rand() % 3 + 2;
   const size_t n = 4, m = 5;
   TimeBlock **entries = (TimeBlock **)malloc(n * sizeof(TimeBlock *));
   check_error(mem_error, entries == NULL);
@@ -340,11 +340,11 @@ TestStatus test_algo_search() {
     for (size_t j = 0; j < m; j++) {
       Entry entry = { .i = i, .j = j };
 
-      ClassRoom *classrooms = (ClassRoom *)malloc(len_classrooms * sizeof(ClassRoom));
+      ClassRoom *classrooms = (ClassRoom *)malloc(s_classrooms * sizeof(ClassRoom));
       check_error(mem_error, classrooms == NULL);
-      for (size_t k = 0; k < len_classrooms; k++) {
+      for (size_t k = 0; k < s_classrooms; k++) {
         classrooms[k].id = k + 1;
-        classrooms[k].len = min_classes;
+        classrooms[k].s_classes = min_classes;
 
         Class *classes = (Class *)malloc(min_classes * sizeof(Class));
         check_error(mem_error, classes == NULL);
@@ -364,8 +364,8 @@ TestStatus test_algo_search() {
           } while (is_chosen_class);
 
           classes[l].id = x;
-          classes[l].len_students = 0;
-          classes[l].len_teachers = 0;
+          classes[l].s_students = 0;
+          classes[l].s_teachers = 0;
           classes[l].students = NULL;
           classes[l].teachers = NULL;
         }
@@ -373,7 +373,7 @@ TestStatus test_algo_search() {
         classrooms[k].classes = classes;
       }
 
-      TimeBlock *block = type_create_timeblock(&entry, classrooms, len_classrooms);
+      TimeBlock *block = type_create_timeblock(&entry, classrooms, s_classrooms);
       check_error(nullptr, block == NULL);
 
       entries[i][j] = *block;
@@ -399,11 +399,11 @@ TestStatus test_algo_search() {
     user_classes[i] = x;
   }
   
-  size_t len_avail = rand() % 5 + 4;
-  Entry *avail = (Entry *)malloc(len_avail * sizeof(Entry));
+  size_t s_avail = rand() % 5 + 4;
+  Entry *avail = (Entry *)malloc(s_avail * sizeof(Entry));
   check_error(mem_error, avail == NULL);
 
-  for (size_t i = 0; i < len_avail; i++) {
+  for (size_t i = 0; i < s_avail; i++) {
     bool is_chosen_block = false;
     Entry block;
 
@@ -424,7 +424,7 @@ TestStatus test_algo_search() {
     avail[i].j = block.j;
   }
   
-  User *user = type_create_user(type, id, user_classes, avail, NULL, min_classes, len_avail, 0);
+  User *user = type_create_user(type, id, user_classes, avail, min_classes, s_avail);
 
   const size_t max_classroom_size = rand() % 3 + 2;
   int rules = 0;
@@ -467,7 +467,7 @@ TestStatus test_algo_update_tree() {
   for (size_t i = 0; i < min_classes; i++)
     classes_id[i] = i + 1;
 
-  const size_t n = 2, m = 2, len_classrooms = rand() % 3 + 2;
+  const size_t n = 2, m = 2, s_classrooms = rand() % 3 + 2;
   TimeBlock **entries = (TimeBlock **)malloc(n * sizeof(TimeBlock *));
   check_error(mem_error, entries == NULL);
 
@@ -478,19 +478,19 @@ TestStatus test_algo_update_tree() {
     for (size_t j = 0; j < m; j++) {
       Entry entry = { .i = i, .j = j };
 
-      ClassRoom *classrooms = (ClassRoom *)malloc(len_classrooms * sizeof(ClassRoom));
+      ClassRoom *classrooms = (ClassRoom *)malloc(s_classrooms * sizeof(ClassRoom));
       check_error(mem_error, classrooms == NULL);
-      for (size_t k = 0; k < len_classrooms; k++) {
+      for (size_t k = 0; k < s_classrooms; k++) {
         classrooms[k].id = k + 1;
-        classrooms[k].len = min_classes;
+        classrooms[k].s_classes = min_classes;
 
         Class *classes = (Class *)malloc(min_classes * sizeof(Class));
         check_error(mem_error, classes == NULL);
 
         for (size_t l = 0; l < min_classes; l++) {
           classes[l].id = classes_id[l];
-          classes[l].len_students = 0;
-          classes[l].len_teachers = 0;
+          classes[l].s_students = 0;
+          classes[l].s_teachers = 0;
           classes[l].students = NULL;
           classes[l].teachers = NULL;
         }
@@ -498,7 +498,7 @@ TestStatus test_algo_update_tree() {
         classrooms[k].classes = classes;
       }
 
-      TimeBlock *block = type_create_timeblock(&entry, classrooms, len_classrooms);
+      TimeBlock *block = type_create_timeblock(&entry, classrooms, s_classrooms);
       check_error(nullptr, block == NULL);
 
       entries[i][j] = *block;
@@ -519,11 +519,11 @@ TestStatus test_algo_update_tree() {
   for (size_t i = 0; i < min_classes; i++)
     user_classes[i] = classes_id[i];
   
-  size_t len_avail = rand() % 3 + 2;
-  Entry *avail = (Entry *)malloc(len_avail * sizeof(Entry));
+  size_t s_avail = rand() % 3 + 2;
+  Entry *avail = (Entry *)malloc(s_avail * sizeof(Entry));
   check_error(mem_error, avail == NULL);
 
-  for (size_t i = 0; i < len_avail; i++) {
+  for (size_t i = 0; i < s_avail; i++) {
     bool is_chosen_block = false;
     Entry block;
 
@@ -544,7 +544,7 @@ TestStatus test_algo_update_tree() {
     avail[i].j = block.j;
   }
   
-  User *user = type_create_user(type, id, user_classes, avail, NULL, min_classes, len_avail, 0);
+  User *user = type_create_user(type, id, user_classes, avail, min_classes, s_avail);
   check_error(nullptr, user == NULL);
 
   Tree *root = tree_library_create_root((void *)timetable);
@@ -552,8 +552,8 @@ TestStatus test_algo_update_tree() {
 
   Entry *user_avail = type_get_avail(user);
   Assignment assign = {
-    .block = user_avail[rand() % type_get_len_avail(user)],
-    .classroom = rand() % len_classrooms + 1,
+    .block = user_avail[rand() % type_get_size_avail(user)],
+    .classroom = rand() % s_classrooms + 1,
     .class = rand() % min_classes + 1
   };
 
@@ -570,7 +570,7 @@ TestStatus test_algo_update_tree() {
 
   check_error(nullptr, root == NULL);
   check_fail(nullptr, root->children == NULL);
-  check_fail(unexp_behaviour, root->len_children != 1);
+  check_fail(unexp_behaviour, root->s_children != 1);
   check_fail(nullptr, root->children[0]->state == NULL);
 
   TimeTable *new_timetable = (TimeTable *)root->children[0]->state;
@@ -578,47 +578,47 @@ TestStatus test_algo_update_tree() {
   check_fail(unexp_behaviour, new_timetable->n != timetable->n);
   check_fail(unexp_behaviour, new_timetable->m != timetable->m);
   check_fail(nullptr, new_timetable->entries == NULL);
-  check_fail(unexp_behaviour, new_timetable->entries[assign.block.i][assign.block.j].len != len_classrooms);
+  check_fail(unexp_behaviour, new_timetable->entries[assign.block.i][assign.block.j].s_classrooms != s_classrooms);
   check_fail(nullptr, new_timetable->entries[assign.block.i][assign.block.j].classrooms == NULL);
 
   ClassRoom *classrooms = new_timetable->entries[assign.block.i][assign.block.j].classrooms;
   ClassRoom assign_classroom;
   bool in_classroom = false;
 
-  for (size_t i = 0; i < len_classrooms; i++)
+  for (size_t i = 0; i < s_classrooms; i++)
     if (classrooms[i].id == assign.classroom) {
       assign_classroom = classrooms[i];
       in_classroom++;
       break;
     }
   check_fail(unexp_behaviour, in_classroom == false);
-  check_fail(unexp_behaviour, assign_classroom.len != min_classes);
+  check_fail(unexp_behaviour, assign_classroom.s_classes != min_classes);
   check_fail(nullptr, assign_classroom.classes == NULL);
 
   Class assign_class;
   bool in_class = false;
-  for (size_t i = 0; i < assign_classroom.len; i++)
+  for (size_t i = 0; i < assign_classroom.s_classes; i++)
     if (assign_classroom.classes[i].id == assign.class) {
       assign_class = assign_classroom.classes[i];
       in_class++;
       break;
     }
   check_fail(unexp_behaviour, in_class == false);
-  check_fail(unexp_behaviour, user->type == student_type && assign_class.len_students == 0);
+  check_fail(unexp_behaviour, user->type == student_type && assign_class.s_students == 0);
   check_fail(nullptr, user->type == student_type && assign_class.students == NULL);
-  check_fail(unexp_behaviour, user->type == teacher_type && assign_class.len_teachers == 0);
+  check_fail(unexp_behaviour, user->type == teacher_type && assign_class.s_teachers == 0);
   check_fail(nullptr, user->type == teacher_type && assign_class.teachers == NULL);
 
   bool is_assigned_correctly = false;
   ID user_id = type_get_id(user);
   if (user->type == student_type) {
-    for (size_t i = 0; i < assign_class.len_students; i++)
+    for (size_t i = 0; i < assign_class.s_students; i++)
       if (assign_class.students[i] == user_id) {
         is_assigned_correctly++;
         break;
       }
   } else {
-    for (size_t i = 0; i < assign_class.len_teachers; i++)
+    for (size_t i = 0; i < assign_class.s_teachers; i++)
       if (assign_class.teachers[i] == user_id) {
         is_assigned_correctly++;
         break;

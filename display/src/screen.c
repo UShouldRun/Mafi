@@ -156,11 +156,9 @@ bool is_digit(char ch) {
   return (bool)(ch >= '0' && ch <= '9');
 }
 
-size_t len_id(ID id) {
+size_t len_uint(uint value) {
   size_t len = 1;
-  uint result = id;
-  for (; result; len++)
-    result = (result - result % 10) / 10;
+  for (; value; value /= 10, len++);
   return len;
 }
 
@@ -503,22 +501,15 @@ Error display_timetables(Win *window, size_t selected_timetable, size_t s_timeta
   if (offset >= s_timetables)
     offset = s_timetables - window->height - 1;
 
-  wmove(window->ptr, 1, (size_t)((double)(window->width - strlen(TT_LIT) - 2 - len_id(s_timetables)) / 2));
+  size_t timetable_count_pos = (size_t)((double)(window->width - strlen(TT_LIT) - 2 - len_uint(s_timetables)) / 2);
+  wmove(window->ptr, 1, timetable_count_pos);
   wprintw(window->ptr, "%s: %zu", TT_LIT, s_timetables);
 
   for (size_t i = 2; i < window->height - 1 && i + offset - 2 < s_timetables; i++) {
     size_t k = i + offset - 2;
-    if (selected_timetable == k) {
-      wmove(window->ptr, i, (window->width - len_id(k)) / 2 - strlen(SELECTED));
-      if (window->has_colors)
-        attron(COLOR_PAIR(2));
-      wprintw(window->ptr, "%s%zu", SELECTED, k);
-      if (window->has_colors)
-        attroff(COLOR_PAIR(2));
-    } else {
-      wmove(window->ptr, i, (window->width - len_id(k)) / 2);
-      wprintw(window->ptr, "%zu", k);
-    }
+    size_t timetable_id_pos = (window->width - len_uint(k)) / 2 - ((selected_timetable == k) ? strlen(SELECTED) : 0);
+    wmove(window->ptr, i, timetable_id_pos);
+    wprintw(window->ptr, "%s%zu", selected_timetable == k ? SELECTED : "", k);
   }
 
   return none;
@@ -531,22 +522,15 @@ Error display_users(Win *window, ID selected_user, ID *users, size_t s_users, si
   if (offset >= s_users)
     offset = s_users - window->height - 1;
 
-  wmove(window->ptr, 1, (size_t)((double)(window->width - strlen(USERS_LIT) - 2 - len_id(s_users)) / 2));
+  size_t user_count_pos = (size_t)((double)(window->width - strlen(USERS_LIT) - 2 - len_uint(s_users)) / 2);
+  wmove(window->ptr, 1, user_count_pos);
   wprintw(window->ptr, "%s: %zu", USERS_LIT, s_users);
 
   for (size_t i = 2; i < window->height - 1 && i + offset - 2 < s_users; i++) {
     size_t k = i + offset - 2;
-    if (selected_user == users[k]) {
-      wmove(window->ptr, i, (window->width - len_id(users[k])) / 2 - strlen(SELECTED));
-      if (window->has_colors)
-        attron(COLOR_PAIR(2));
-      wprintw(window->ptr, "%s%u", SELECTED, users[k]);
-      if (window->has_colors)
-        attroff(COLOR_PAIR(2));
-    } else {
-      wmove(window->ptr, i, (window->width - len_id(users[k])) / 2);
-      wprintw(window->ptr, "%u", users[k]);
-    }
+    size_t user_id_pos = (window->width - len_uint(users[k])) / 2 - ((selected_user == users[k]) ? strlen(SELECTED) : 0);
+    wmove(window->ptr, i, user_id_pos);
+    wprintw(window->ptr, "%s%u", selected_user == users[k] ? SELECTED : "", users[k]);
   }
 
   return none;
@@ -576,29 +560,28 @@ Error display_user_schedule(Win *window, TimeTable *timetable, ID user) {
   size_t s_schedule = type_get_assign_from_timetable_with_id(&schedule, timetable, user);
   check_error(nullptr, schedule == NULL);
 
-  double height_table_entry = (double)window->height / timetable->n, width_table_entry = (double)window->width / timetable->m;
+  double height_table_entry = (double)window->height / timetable->n,
+         width_table_entry = (double)window->width / timetable->m;
+
   for (size_t i = 0; i < s_schedule; i++) {
+    size_t class_pos_y = height_table_entry / 2,
+           class_pos_x = (double)width_table_entry / 2 - (double)len_uint(schedule[i].class) / 2,
+
+           classroom_pos_y = height_table_entry / 2 + 1,
+           classroom_pos_x = (double)width_table_entry / 2 - (double)len_uint(schedule[i].classroom) / 2,
+
+           entry_pos_y = window->y + (size_t)(schedule[i].block.i * height_table_entry),
+           entry_pos_x = window->x + (size_t)(schedule[i].block.j * width_table_entry);
+
     if (timetable->n <= 8) {
-      mvwprintw(
-        window->ptr,
-        window->y + (size_t)(schedule[i].block.i * height_table_entry + height_table_entry / 2),
-        window->x + (size_t)(schedule[i].block.j * width_table_entry + (double)width_table_entry / 2 - (double)len_id(schedule[i].class) / 2),
-        "%u", schedule[i].class
-      );
-      mvwprintw(
-        window->ptr,
-        window->y + (size_t)(schedule[i].block.i * height_table_entry + height_table_entry / 2) + 1,
-        window->x + (size_t)(schedule[i].block.j * width_table_entry + (double)width_table_entry / 2 - (double)len_id(schedule[i].class) / 2),
-        "%u", schedule[i].classroom
-      );
+      mvwprintw(window->ptr, entry_pos_y + class_pos_y, entry_pos_x + class_pos_x, "%u", schedule[i].class);
+      mvwprintw(window->ptr, entry_pos_y + classroom_pos_y, entry_pos_x + classroom_pos_x, "%u", schedule[i].classroom);
       continue;
     }
-    mvwprintw(
-      window->ptr,
-      window->y + (size_t)(schedule[i].block.i * height_table_entry + height_table_entry / 2),
-      window->x + (size_t)(schedule[i].block.j * width_table_entry + (double)width_table_entry / 2 - (double)(len_id(schedule[i].class) + len_id(schedule[i].classroom)) / 2),
-      "%u/%u", schedule[i].class, schedule[i].classroom
-    );
+
+    size_t data_pos_y = class_pos_y,
+           data_pos_x = width_table_entry / 2 - (len_uint(schedule[i].class) + len_uint(schedule[i].classroom)) / 2;
+    mvwprintw(window->ptr, entry_pos_y + data_pos_y, entry_pos_x + data_pos_x, "%u/%u", schedule[i].class, schedule[i].classroom);
   }
 
   return none;
@@ -672,8 +655,7 @@ Error refresh_windows(
       wrefresh(windows[timetable_list_win].ptr);
       // wrefresh(windows[log_win].ptr);
       wrefresh(windows[stats_win].ptr);
-    }
-    else {
+    } else {
       werase(windows[help_win].ptr);
       wbkgd(windows[help_win].ptr, COLOR_PAIR(1));
       wmove(windows[help_win].ptr, 1, 1);

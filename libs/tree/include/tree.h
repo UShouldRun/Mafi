@@ -17,7 +17,7 @@ typedef struct tree_node {
   void *state;
   struct tree_node *parent;
   struct tree_node **children;
-  size_t len_children;
+  size_t s_children;
 } Tree;
 
 // ======================================# PUBLIC #=========================================
@@ -25,7 +25,7 @@ typedef struct tree_node {
 Tree *tree_library_create_root(void *state);
 
 Tree *tree_library_add_child(Tree *node, void *state);
-size_t tree_library_get_len_children(Tree *node);
+size_t tree_library_get_size_children(Tree *node);
 
 bool tree_library_is_leaf(Tree *node);
 Tree **tree_library_get_leaves(Tree *root, size_t *size);

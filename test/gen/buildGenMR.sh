@@ -1,1 +1,1 @@
-gcc -Wall -Werror -Wpedantic -g -o gen_mr gen_mr.c
+gcc -Wall -Werror -Wpedantic -g -o gen_mr gen_mr.c -I./../../algo/include/ -I./../../libs/hashmap/include -I./../../libs/error/include/ -lalgo -L./../../algo/build/ -lhashmap -L./../../libs/hashmap/build/ -lerror -L./../../libs/error/build/

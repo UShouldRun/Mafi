@@ -114,8 +114,8 @@ void algo_search(
   Assignment *temp = (Assignment *)malloc(capacity * sizeof(Assignment));
   check_if(temp == NULL, fatal, mem_error);
 
-  const size_t len_avail = type_get_len_avail(user),
-               len_classes = type_get_len_classes(user);
+  const size_t s_avail = type_get_size_avail(user),
+               s_classes = type_get_size_classes(user);
   
   const UserType user_type = type_get_is_student(user);
   const ID user_id = type_get_id(user);
@@ -126,8 +126,8 @@ void algo_search(
   Entry *user_avail = type_get_avail(user);
   check_ptr(user_avail == NULL);
 
-  for (size_t i = 0; i < len_avail; i++)
-    for (size_t j = 0; j < len_classes; j++) {
+  for (size_t i = 0; i < s_avail; i++)
+    for (size_t j = 0; j < s_classes; j++) {
       if (!in_rules(rules, timetable, &user_avail[i], user_classes[j], user_id, user_type))
         continue;
 
@@ -189,14 +189,14 @@ void algo_update_tree(Logger *logger, Exception *exception, Tree **leaf, User *u
   ClassRoom *classroom = NULL;
   Class *class = NULL;
 
-  for (size_t i = 0; i < timeblock.len; i++)
+  for (size_t i = 0; i < timeblock.s_classrooms; i++)
     if (timeblock.classrooms[i].id == schedule->classroom) {
       classroom = &timeblock.classrooms[i];
       break;
     }
   check_ptr(classroom == NULL);
 
-  for (size_t i = 0; i < classroom->len; i++)
+  for (size_t i = 0; i < classroom->s_classes; i++)
     if (classroom->classes[i].id == schedule->class) {
       class = &classroom->classes[i]; 
       break;
@@ -206,19 +206,19 @@ void algo_update_tree(Logger *logger, Exception *exception, Tree **leaf, User *u
   ID *temp = NULL;
   switch (user->type) {
     case student_type:
-      temp = (ID *)realloc(class->students, (class->len_students + 1) * sizeof(ID));
+      temp = (ID *)realloc(class->students, (class->s_students + 1) * sizeof(ID));
       check_if(temp == NULL, fatal, mem_error);
 
       class->students = temp;
-      class->students[class->len_students++] = type_get_id(user);
+      class->students[class->s_students++] = type_get_id(user);
       break;
 
     case teacher_type:
-      temp = (ID *)realloc(class->teachers, (class->len_teachers + 1) * sizeof(ID));
+      temp = (ID *)realloc(class->teachers, (class->s_teachers + 1) * sizeof(ID));
       check_if(temp == NULL, fatal, mem_error);
 
       class->teachers = temp;
-      class->teachers[class->len_teachers++] = type_get_id(user);
+      class->teachers[class->s_teachers++] = type_get_id(user);
       break;
 
     default:
@@ -286,7 +286,7 @@ bool _algo_smaller_avail(User *userA, User *userB) {
   return userA ? (
           userB ?
             (bool)(
-              type_get_len_avail(userA) + type_get_len_assign(userA) < type_get_len_avail(userB) + type_get_len_assign(userB)
+              type_get_size_avail(userA) + type_get_size_assign(userA) < type_get_size_avail(userB) + type_get_size_assign(userB)
             )
           : false
         ) : false;
@@ -297,9 +297,16 @@ bool _algo_is_final_state(TimeTable *state, User **users, size_t size) {
     return false;
 
   for (size_t i = 0; i < size; i++) {
-    size_t s_classes = type_get_len_classes(users[i]);
+    bool is_student = type_get_is_student(users[i]);
+    size_t s_avail = type_get_size_avail(users[i]);
+    size_t s_classes = type_get_size_classes(users[i]);
     size_t s_assigns = type_get_assign_from_timetable(NULL, state, users[i]); 
-    if (s_assigns != s_classes)
+    if (is_student) {
+      if (s_assigns != s_classes && s_avail >= s_classes)
+        return false;
+      continue;
+    }
+    if (s_assigns == 0 && s_avail >= s_classes)
       return false;
   }
   return true;

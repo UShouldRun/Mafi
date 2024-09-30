@@ -234,7 +234,7 @@ static const char _logger_exception_levels[4][20] = {
   "[FATAL]: "
 };
 
-static const char _logger_exception_types[9][20] = {
+static const char _logger_exception_types[9][21] = {
   "nil",
   "Invalid Argument",
   "Index Out of Bounds",

@@ -46,13 +46,17 @@ void logger_write_message(Message *msg, FILE *dest, Type t, StatusLevel s_level,
     );
 
     if (node->type != status_type && !mark_printed) {
-      fprintf(dest, "%s%s%*s%s ...\n", _logger_match_colors(node->type, s_level, e_level), mark, 1, "", formatted_msg_track);
+      fprintf(
+        dest,
+        "%s%s%*s%s%s ...\n",
+        _logger_match_colors(node->type, s_level, e_level), mark, 1, "", formatted_msg_track, _logger_colors[0]
+      );
       mark_printed++;
     } else {
       fprintf(
-        dest, "%s%s%*s%s ...\n", _logger_match_colors(node->type, s_level, e_level),
+        dest, "%s%s%*s%s%s ...\n", _logger_match_colors(node->type, s_level, e_level),
         (t == status_type && node == msg->list ? mark : ""), (t == status_type && node == msg->list ? 0 : (int)offset) + 1, "",
-        formatted_msg_track
+        formatted_msg_track, _logger_colors[0]
       );
     }
 
@@ -137,7 +141,7 @@ void logger_write_error(Exception *except, FILE *dest) {
 
   const char *error_mark = _logger_match_exception_level(error),
              *type_mark = _logger_match_exception_type(except->type);
-  size_t buffer_size = (strlen(_logger_colors[RED]) + strlen(error_mark) + strlen(type_mark) + 3) * sizeof(char);
+  size_t buffer_size = (strlen(_logger_colors[RED]) + strlen(error_mark) + strlen(type_mark) + 4) * sizeof(char);
   char *exception_mark = (char *)malloc(buffer_size);
   if (!exception_mark) {
     fprintf(stderr, "[ERROR]: [%s] exception_mark == NULL at %s (%s: %u)\n", _logger_match_exception_type(null_pointer), __func__, __FILE__, __LINE__);

@@ -25,18 +25,18 @@ Error read_mw(FILE *file, TimeTable **timetables, size_t *s_timetables) {
           "\t%zu %zu %zu\n",
           &timetable->entries[i][j].entry.i,
           &timetable->entries[i][j].entry.j,
-          &timetable->entries[i][j].len
+          &timetable->entries[i][j].s_classrooms
         );
 
-        size_t s_classrooms = timetable->entries[i][j].len;
+        size_t s_classrooms = timetable->entries[i][j].s_classrooms;
         ClassRoom *classrooms = (ClassRoom *)malloc(s_classrooms * sizeof(ClassRoom));
         check_error(mem_error, classrooms == NULL);
         timetable->entries[i][j].classrooms = classrooms;
 
         for (size_t k = 0; k < s_classrooms; k++) {
-          fscanf(file, "\t\t%u %zu\n", &classrooms[k].id, &classrooms[k].len);
+          fscanf(file, "\t\t%u %zu\n", &classrooms[k].id, &classrooms[k].s_classes);
 
-          size_t s_classes = classrooms[k].len;
+          size_t s_classes = classrooms[k].s_classes;
           Class *classes = (Class *)malloc(s_classes * sizeof(Class));
           check_error(mem_error, classes == NULL);
 
@@ -46,12 +46,12 @@ Error read_mw(FILE *file, TimeTable **timetables, size_t *s_timetables) {
               file,
               "\t\t\t%u %zu %zu\n",
               &classes[l].id,
-              &classes[l].len_students,
-              &classes[l].len_teachers
+              &classes[l].s_students,
+              &classes[l].s_teachers
             );
 
-            size_t s_students = classes[l].len_students,
-                   s_teachers = classes[l].len_teachers;
+            size_t s_students = classes[l].s_students,
+                   s_teachers = classes[l].s_teachers;
 
             if (s_students) {
               ID *students = (ID *)malloc(s_students * sizeof(ID));
@@ -78,27 +78,32 @@ Error read_mw(FILE *file, TimeTable **timetables, size_t *s_timetables) {
             } else {
               classes[l].teachers = NULL;
             }
+
+            fscanf(file, "\n");
           }
+          fscanf(file, "\n");
         }
+        fscanf(file, "\n");
       }
+      fscanf(file, "\n");
     } 
   }
 
   return none;
 }
 
-size_t append(uint data, uint **array, size_t len) {
+size_t append(uint data, uint **array, size_t s_array) {
   if (!array)
     return 0;
 
-  ID *new_array = (uint *)realloc(*array, (len + 1) * sizeof(uint));
+  ID *new_array = (uint *)realloc(*array, (s_array + 1) * sizeof(uint));
   if (!new_array)
     return 0;
 
   *array = new_array;
-  (*array)[len++] = data;
+  (*array)[s_array++] = data;
 
-  return len;
+  return s_array;
 }
 
 bool included(ID user, ID *users, size_t s_users) {
@@ -137,22 +142,22 @@ size_t get_users(TimeTable *timetable, ID **users) {
       assert(nullptr, timetable->entries[i][j].classrooms != NULL);
 
       TimeBlock entry = timetable->entries[i][j];
-      for (size_t k = 0; k < entry.len; k++) {
+      for (size_t k = 0; k < entry.s_classrooms; k++) {
         assert(nullptr, entry.classrooms[k].classes != NULL);
 
         ClassRoom classroom = entry.classrooms[k];
-        for (size_t l = 0; l < classroom.len; l++) {
+        for (size_t l = 0; l < classroom.s_classes; l++) {
           Class class = classroom.classes[l];
 
           if (class.students)
-            for (size_t m = 0; m < class.len_students; m++)
+            for (size_t m = 0; m < class.s_students; m++)
               if (!included(class.students[m], *users, s_users)) {
                 s_users = append(class.students[m], users, s_users);
                 assert(nullptr, *users != NULL);
               }
 
           if (class.teachers)
-            for (size_t m = 0; m < class.len_teachers; m++)
+            for (size_t m = 0; m < class.s_teachers; m++)
               if (!included(class.teachers[m], *users, s_users)) {
                 s_users = append(class.teachers[m], users, s_users);
                 assert(nullptr, *users != NULL);
